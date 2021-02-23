@@ -307,6 +307,13 @@ void mmu_loop(void)
 				mmu_fil_loaded = false;
 				mmu_state = S::WaitCmd;
 			}
+			else if (mmu_cmd == MmuCmd::Z0)
+			{
+			    DEBUG_PRINTF_P(PSTR("MMU <= 'Z0'\n"));
+				mmu_puts_P(PSTR("Z0\n")); //send 'free filament'
+				mmu_fil_loaded = false;
+				mmu_state = S::WaitCmd;
+			}
 			else if ((mmu_cmd >= MmuCmd::E0) && (mmu_cmd <= MmuCmd::E4))
 			{
 			    const uint8_t filament = mmu_cmd - MmuCmd::E0;
@@ -1068,7 +1075,10 @@ static const E_step ramming_sequence[] PROGMEM =
 //! @brief Unload sequence to optimize shape of the tip of the unloaded filament
 void mmu_filament_ramming()
 {
-    for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
+	
+	mmu_command(MmuCmd::Z0); // free filament at mmu
+
+	for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
     {
         current_position[E_AXIS] += pgm_read_float(&(ramming_sequence[i].extrude));
         plan_buffer_line_curposXYZE(pgm_read_float(&(ramming_sequence[i].feed_rate)));

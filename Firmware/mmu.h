@@ -60,6 +60,7 @@ enum class MmuCmd : uint_least8_t
     R0,
     S3,
     W0, //!< Wait and signal load error
+	Z0, // Free filament at mmu
 };
 
 inline MmuCmd operator+ (MmuCmd cmd, uint8_t filament)
