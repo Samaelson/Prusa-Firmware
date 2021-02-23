@@ -1077,6 +1077,8 @@ void mmu_filament_ramming()
 {
 	
 	mmu_command(MmuCmd::Z0); // free filament at mmu
+	// get response
+	manage_response(false, false);
 
 	for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
     {
