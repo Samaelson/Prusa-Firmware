@@ -307,12 +307,17 @@ void mmu_loop(void)
 				mmu_fil_loaded = false;
 				mmu_state = S::WaitCmd;
 			}
-			else if (mmu_cmd == MmuCmd::Z0)
+			else if (mmu_cmd == MmuCmd::V0)
 			{
-			    DEBUG_PRINTF_P(PSTR("MMU <= 'Z0'\n"));
-				mmu_puts_P(PSTR("Z0\n")); //send 'free filament'
-				mmu_fil_loaded = false;
+			    DEBUG_PRINTF_P(PSTR("MMU <= 'V0'\n"));
+				mmu_puts_P(PSTR("V0\n")); //disengange filament'
 				mmu_state = S::WaitCmd;
+			}
+			else if (mmu_cmd == MmuCmd::V1)
+			{
+			    DEBUG_PRINTF_P(PSTR("MMU <= 'V1'\n"));
+			    mmu_puts_P(PSTR("V1\n")); //engange filament'
+			    mmu_state = S::WaitCmd;
 			}
 			else if ((mmu_cmd >= MmuCmd::E0) && (mmu_cmd <= MmuCmd::E4))
 			{
@@ -800,6 +805,11 @@ void manage_response(bool move_axes, bool turn_off_nozzle, uint8_t move)
 //!
 void mmu_load_to_nozzle()
 {
+
+	mmu_command(MmuCmd::V0); // disengage filament at mmu
+	// get response
+	manage_response(false, false);
+	
 	st_synchronize();
 	
 	const bool saved_e_relative_mode = axis_relative_modes & E_AXIS_MASK;
@@ -828,6 +838,10 @@ void mmu_load_to_nozzle()
 	plan_buffer_line_curposXYZE(feedrate / 60);
     st_synchronize();
 	if (!saved_e_relative_mode) axis_relative_modes &= ~E_AXIS_MASK;
+
+	//mmu_command(MmuCmd::V1); // engage filament at mmu after loading
+	// get response
+	//manage_response(false, false);
 }
 
 void mmu_M600_wait_and_beep() {
@@ -1076,7 +1090,7 @@ static const E_step ramming_sequence[] PROGMEM =
 void mmu_filament_ramming()
 {
 	
-	mmu_command(MmuCmd::Z0); // free filament at mmu
+	mmu_command(MmuCmd::V0); // free filament at mmu
 	// get response
 	manage_response(false, false);
 

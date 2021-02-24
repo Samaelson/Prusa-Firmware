@@ -8991,6 +8991,48 @@ Sigma_Exit:
   #### End of T-Codes
   */
 
+  /*!
+  -----------------------------------------------------------------------------------------
+  # V Codes
+  V<command nr.> - dis-/engages filament in case of MMU_V2 with filament buttler.
+  #### For MMU_V2:
+  V<n> Gcode to engage / disengage the filament at the MMU_V2 unit with filament butler installed.
+  @n V0 Gcode to disengage filament.
+  @n V1 Gcode to engage filament.
+  */
+  else if(code_seen('V'))
+  {
+      
+      int index;
+      for (index = 1; *(strchr_pointer + index) == ' ' || *(strchr_pointer + index) == '\t'; index++);
+
+	  *(strchr_pointer + index) = tolower(*(strchr_pointer + index));
+
+      if ((*(strchr_pointer + index) < '0' || *(strchr_pointer + index) > '1')) {
+          SERIAL_ECHOLNPGM("Invalid V code.");
+      }
+	  else if (*(strchr_pointer + index) == '0'){ //disengage filament
+		if (mmu_enabled)
+		{
+			st_synchronize();
+			mmu_command(MmuCmd::V0);
+			manage_response(false, false);
+		}
+	  }
+	  else if (*(strchr_pointer + index) == '1') { //engage filament
+	  	if (mmu_enabled) 
+		{
+			st_synchronize();
+			mmu_command(MmuCmd::V1);
+			manage_response(false, false);
+		}
+	  }
+      
+  } // end if(code_seen('V')) (end of V codes)
+  /*!
+  #### End of V-Codes
+  */
+
   /**
   *---------------------------------------------------------------------------------
   *# D codes
