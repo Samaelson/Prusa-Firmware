@@ -46,11 +46,13 @@ namespace
         WaitCmd, //!< wait for command response
         Pause,
         GetDrvError, //!< get power failures count
-		SwitchMode //switch mmu between stealth and normal mode 
+		SwitchMode, //switch mmu between stealth and normal mode 
+		GetButlerState
     };
 }
 
 bool mmu_enabled = false;
+bool mmu_has_butler = false;
 bool mmu_ready = false;
 bool mmu_fil_loaded = false; //if true: blocks execution of duplicit T-codes
 
@@ -211,6 +213,7 @@ void mmu_loop(void)
 		    DEBUG_PUTS_P(PSTR("MMU <= 'S1'"));
 		    mmu_puts_P(PSTR("S1\n")); //send 'read version' request
 			mmu_state = S::GetVersion;
+			
 		}
 		else if (_millis() > 30000) //30sec after reset disable mmu
 		{
@@ -239,9 +242,12 @@ void mmu_loop(void)
 			
 			if (!activate_stealth_mode())
 			{
-				FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
-				mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
-				mmu_state = S::GetFindaInit;
+				//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
+				//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+				//mmu_state = S::GetFindaInit;
+				FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
+				mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
+				mmu_state = S::GetButlerState;			
 			}
 			else
 			{
@@ -255,11 +261,23 @@ void mmu_loop(void)
 	case S::WaitStealthMode:
 		if (mmu_rx_ok() > 0)
 		{
-			FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
-		    mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
-			mmu_state = S::GetFindaInit;
+				//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
+				//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+				//mmu_state = S::GetFindaInit;
+				FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
+				mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
+				mmu_state = S::GetButlerState;
 		}
 		return;
+	case S::GetButlerState:
+		if (mmu_rx_ok() > 0)
+		{
+			mmu_has_butler = true;
+		}
+		FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
+	    mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+		mmu_state = S::GetFindaInit;
+		return;	
 	case S::GetFindaInit:
 		if (mmu_rx_ok() > 0)
 		{
@@ -307,13 +325,13 @@ void mmu_loop(void)
 				mmu_fil_loaded = false;
 				mmu_state = S::WaitCmd;
 			}
-			else if (mmu_cmd == MmuCmd::V0)
+			else if ((mmu_cmd == MmuCmd::V0) && (mmu_has_butler == true))
 			{
-			    DEBUG_PRINTF_P(PSTR("MMU <= 'V0'\n"));
+				DEBUG_PRINTF_P(PSTR("MMU <= 'V0'\n"));
 				mmu_puts_P(PSTR("V0\n")); //disengange filament'
 				mmu_state = S::WaitCmd;
 			}
-			else if (mmu_cmd == MmuCmd::V1)
+			else if ((mmu_cmd == MmuCmd::V1) && (mmu_has_butler == true))
 			{
 			    DEBUG_PRINTF_P(PSTR("MMU <= 'V1'\n"));
 			    mmu_puts_P(PSTR("V1\n")); //engange filament'
@@ -806,9 +824,12 @@ void manage_response(bool move_axes, bool turn_off_nozzle, uint8_t move)
 void mmu_load_to_nozzle()
 {
 
-	mmu_command(MmuCmd::V0); // disengage filament at mmu
-	// get response
-	manage_response(false, false);
+	if(mmu_has_butler == true)
+	{
+		mmu_command(MmuCmd::V0); // disengage filament at mmu
+		// get response
+		manage_response(false, false);
+	}
 	
 	st_synchronize();
 	
@@ -839,9 +860,6 @@ void mmu_load_to_nozzle()
     st_synchronize();
 	if (!saved_e_relative_mode) axis_relative_modes &= ~E_AXIS_MASK;
 
-	//mmu_command(MmuCmd::V1); // engage filament at mmu after loading
-	// get response
-	//manage_response(false, false);
 }
 
 void mmu_M600_wait_and_beep() {
@@ -1089,10 +1107,13 @@ static const E_step ramming_sequence[] PROGMEM =
 //! @brief Unload sequence to optimize shape of the tip of the unloaded filament
 void mmu_filament_ramming()
 {
-	
-	mmu_command(MmuCmd::V0); // free filament at mmu
-	// get response
-	manage_response(false, false);
+
+	if(mmu_has_butler == true)
+	{	
+		mmu_command(MmuCmd::V0); // free filament at mmu
+		// get response
+		manage_response(false, false);
+	}
 
 	for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
     {

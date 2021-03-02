@@ -9017,6 +9017,9 @@ Sigma_Exit:
   {
       
       int index;
+	  
+	  if(mmu_has_butler == false) return;
+	  
       for (index = 1; *(strchr_pointer + index) == ' ' || *(strchr_pointer + index) == '\t'; index++);
 
 	  *(strchr_pointer + index) = tolower(*(strchr_pointer + index));

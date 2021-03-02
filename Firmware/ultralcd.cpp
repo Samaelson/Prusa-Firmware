@@ -1374,7 +1374,7 @@ void lcd_commands()
                 lcd_commands_step = 8;
                 break;
             case 8:
-                if (mmu_enabled) enquecommand_P(PSTR("V1")); //engage filament
+                if (mmu_enabled && mmu_has_butler) enquecommand_P(PSTR("V1")); //engage filament
                 lay1cal_before_meander();
                 lcd_commands_step = 7;
                 break;
@@ -1411,7 +1411,7 @@ void lcd_commands()
                 lcd_commands_step = 2;
                 break;
             case 2:
-                if (mmu_enabled) enquecommand_P(PSTR("V0")); //disengage filament
+                if (mmu_enabled && mmu_has_butler) enquecommand_P(PSTR("V0")); //disengage filament
                 enquecommand_P(PSTR("M107")); //turn off printer fan
                 enquecommand_P(PSTR("G1 E-0.07500 F2100.00000")); //retract
                 enquecommand_P(PSTR("M104 S0")); // turn off temperature

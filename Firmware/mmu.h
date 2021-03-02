@@ -7,6 +7,7 @@
 
 
 extern bool mmu_enabled;
+extern bool mmu_has_butler;
 extern bool mmu_fil_loaded;
 
 extern uint8_t mmu_extruder;
