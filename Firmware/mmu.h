@@ -63,6 +63,7 @@ enum class MmuCmd : uint_least8_t
     W0, //!< Wait and signal load error
     V0, // Disengage filament at mmu
     V1, // Engage filament at mmu
+    V3, // Get butler support status
 };
 
 inline MmuCmd operator+ (MmuCmd cmd, uint8_t filament)

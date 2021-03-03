@@ -46,8 +46,8 @@ namespace
         WaitCmd, //!< wait for command response
         Pause,
         GetDrvError, //!< get power failures count
-		SwitchMode, //switch mmu between stealth and normal mode 
-		GetButlerState
+        SwitchMode, //switch mmu between stealth and normal mode 
+        GetButlerState
     };
 }
 
@@ -213,7 +213,6 @@ void mmu_loop(void)
 		    DEBUG_PUTS_P(PSTR("MMU <= 'S1'"));
 		    mmu_puts_P(PSTR("S1\n")); //send 'read version' request
 			mmu_state = S::GetVersion;
-			
 		}
 		else if (_millis() > 30000) //30sec after reset disable mmu
 		{
@@ -261,12 +260,12 @@ void mmu_loop(void)
 	case S::WaitStealthMode:
 		if (mmu_rx_ok() > 0)
 		{
-				//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
-				//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
-				//mmu_state = S::GetFindaInit;
-				FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
-				mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
-				mmu_state = S::GetButlerState;
+			//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
+			//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+			//mmu_state = S::GetFindaInit;
+			FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
+			mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
+			mmu_state = S::GetButlerState;
 		}
 		return;
 	case S::GetButlerState:
@@ -275,7 +274,7 @@ void mmu_loop(void)
 			mmu_has_butler = true;
 		}
 		FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
-	    mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+	    	mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
 		mmu_state = S::GetFindaInit;
 		return;	
 	case S::GetFindaInit:
@@ -859,7 +858,6 @@ void mmu_load_to_nozzle()
 	plan_buffer_line_curposXYZE(feedrate / 60);
     st_synchronize();
 	if (!saved_e_relative_mode) axis_relative_modes &= ~E_AXIS_MASK;
-
 }
 
 void mmu_M600_wait_and_beep() {
@@ -1115,7 +1113,7 @@ void mmu_filament_ramming()
 		manage_response(false, false);
 	}
 
-	for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
+    for(uint8_t i = 0; i < (sizeof(ramming_sequence)/sizeof(E_step));++i)
     {
         current_position[E_AXIS] += pgm_read_float(&(ramming_sequence[i].extrude));
         plan_buffer_line_curposXYZE(pgm_read_float(&(ramming_sequence[i].feed_rate)));
