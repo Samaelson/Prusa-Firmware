@@ -29,7 +29,7 @@
 #define MMU_CMD_TIMEOUT 45000ul //45s timeout for mmu commands (except P0)
 #define MMU_P0_TIMEOUT 3000ul //timeout for P0 command: 3seconds
 #define MMU_MAX_RESEND_ATTEMPTS 2
-
+#define MMU_BUTLER_RG_TIMEOUT 3000ul // timeout for V3 - has butler request command: 3seconds 
 
 namespace
 {
@@ -83,6 +83,7 @@ uint32_t mmu_last_response = 0;
 MmuCmd mmu_last_cmd = MmuCmd::None;
 uint16_t mmu_power_failures = 0;
 
+uint32_t _has_butler_rq_timeout = 0;
 
 #ifdef MMU_DEBUG
 static const auto DEBUG_PUTCHAR = putchar;
@@ -244,8 +245,9 @@ void mmu_loop(void)
 				//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
 				//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
 				//mmu_state = S::GetFindaInit;
-				FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
+				DEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
 				mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
+       _has_butler_rq_timeout = MMU_BUTLER_RG_TIMEOUT;
 				mmu_state = S::GetButlerState;			
 			}
 			else
@@ -263,8 +265,9 @@ void mmu_loop(void)
 			//FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
 			//mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
 			//mmu_state = S::GetFindaInit;
-			FDEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
+			DEBUG_PUTS_P(PSTR("MMU <= 'V3'"));
 			mmu_puts_P(PSTR("V3\n")); //send 'get butler state' request
+     _has_butler_rq_timeout = MMU_BUTLER_RG_TIMEOUT;
 			mmu_state = S::GetButlerState;
 		}
 		return;
@@ -272,10 +275,23 @@ void mmu_loop(void)
 		if (mmu_rx_ok() > 0)
 		{
 			mmu_has_butler = true;
+      _has_butler_rq_timeout = 0;
 		}
-		FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
-	    	mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
-		mmu_state = S::GetFindaInit;
+		else
+		{
+      _has_butler_rq_timeout--;
+		}
+		if(_has_butler_rq_timeout == 0)
+    {
+		  if(mmu_has_butler == true) 
+		    puts_P(PSTR("MMU has butler"));
+		  else
+        puts_P(PSTR("MMU has NO butler")); 
+		  
+		  FDEBUG_PUTS_P(PSTR("MMU <= 'P0'"));
+	    mmu_puts_P(PSTR("P0\n")); //send 'read finda' request
+		  mmu_state = S::GetFindaInit;
+    }
 		return;	
 	case S::GetFindaInit:
 		if (mmu_rx_ok() > 0)
